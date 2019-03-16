@@ -12,7 +12,8 @@ private val processContext = newSingleThreadContext("External command execution"
 private suspend fun execute(command: String): String = withContext(processContext) {
     val process = ProcessBuilder(command).start()
 
-    val output =process.inputStream.bufferedReader()
+    val output = process.inputStream
+        .bufferedReader()
         .lines()
         .map { println("[Command output] $it"); it }
         .toList()
@@ -20,7 +21,10 @@ private suspend fun execute(command: String): String = withContext(processContex
 
     val errorOutput = process.errorStream
         .bufferedReader()
-        .readText()
+        .lines()
+        .map { println("[Command error output] $it"); it }
+        .toList()
+        .joinToString("\n")
 
     val code = process.waitFor()
 

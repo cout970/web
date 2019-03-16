@@ -2,6 +2,8 @@
 set -euo pipefail
 
 function checkForUpdates() {
+    git remote update
+
     UPSTREAM=${1:-'@{u}'}
     LOCAL=$(git rev-parse @)
     REMOTE=$(git rev-parse "$UPSTREAM")
@@ -24,6 +26,10 @@ function checkForUpdates() {
 if checkForUpdates; then
     echo "Downloading latest version"
     git pull origin master
+
+    echo "Restoring scripts permissions"
+    chmod +x scripts/*
+
     echo "Compiling code"
     ./build.sh
     echo "done"
