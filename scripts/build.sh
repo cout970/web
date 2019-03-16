@@ -6,9 +6,6 @@ if [[ `pwd` == */scripts ]]; then
     cd ..
 fi
 
-echo "Making sure gradle exists and can be executed"
-chmod +x gradlew
-
 echo "Running build..."
 ./gradlew build
 

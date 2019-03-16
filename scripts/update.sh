@@ -27,10 +27,7 @@ if checkForUpdates; then
     echo "Downloading latest version"
     git pull origin master
 
-    echo "Restoring scripts permissions"
-    chmod +x scripts/*
-
     echo "Compiling code"
-    ./build.sh
+    scripts/build.sh
     echo "done"
 fi
