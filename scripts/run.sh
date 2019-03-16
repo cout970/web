@@ -6,7 +6,8 @@ fi
 
 runCommand='java -jar build/libs/web.jar -port=80'
 
-until ${runCommand}; do
+until 1; do
+    ${runCommand}
     echo "Server crashed with exit code $?. Respawning in 1 second.." >&2
     sleep 1
 done
