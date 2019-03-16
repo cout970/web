@@ -3,6 +3,7 @@ package com.cout970
 import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.application.install
+import io.ktor.application.log
 import io.ktor.features.*
 import io.ktor.gson.gson
 import io.ktor.http.ContentType
@@ -14,6 +15,7 @@ import io.ktor.response.respond
 import io.ktor.response.respondText
 import io.ktor.routing.get
 import io.ktor.routing.routing
+import io.ktor.server.engine.ShutDownUrl
 import io.ktor.sessions.*
 import org.slf4j.event.Level
 import kotlin.collections.set
@@ -42,6 +44,11 @@ fun Application.module(testing: Boolean = false) {
 
     install(AutoHeadResponse)
 
+    install(ShutDownUrl.ApplicationCallFeature) {
+        shutDownUrl = "/run/restart"
+        exitCodeSupplier = { 0 }
+    }
+
     install(CallLogging) {
         level = Level.INFO
         filter { call -> call.request.path().startsWith("/") }
@@ -61,7 +68,10 @@ fun Application.module(testing: Boolean = false) {
 
     routing {
         get("/") {
-            call.respondText("<h1>HELLO WORLD!</h1><a href=\"/static/js_editor.html\">Go here!</a>", contentType = ContentType.Text.Html)
+            call.respondText(
+                "<h1>HELLO WORLD!</h1><a href=\"/static/js_editor.html\">Go here!</a>",
+                contentType = ContentType.Text.Html
+            )
         }
 
         static("/static") {
@@ -85,6 +95,12 @@ fun Application.module(testing: Boolean = false) {
 
         get("/json/gson") {
             call.respond(mapOf("hello" to "world"))
+        }
+
+        get("/run/update") {
+            this@module.log.info("Starting update checks")
+            call.respondText(updateServer(), contentType = ContentType.Text.Plain)
+            this@module.log.info("Update done")
         }
     }
 }
