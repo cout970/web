@@ -44,11 +44,6 @@ fun Application.module(testing: Boolean = false) {
 
     install(AutoHeadResponse)
 
-    install(ShutDownUrl.ApplicationCallFeature) {
-        shutDownUrl = "/run/restart"
-        exitCodeSupplier = { 0 }
-    }
-
     install(CallLogging) {
         level = Level.INFO
         filter { call -> call.request.path().startsWith("/") }
@@ -101,6 +96,14 @@ fun Application.module(testing: Boolean = false) {
             this@module.log.info("Starting update checks")
             call.respondText(updateServer(), contentType = ContentType.Text.Plain)
             this@module.log.info("Update done")
+        }
+
+        get("/run/restart") {
+            if (call.parameters["key"] == System.getenv("ktor_private_key")) {
+                ShutDownUrl("") { 1 }.doShutdown(call)
+            } else {
+                log.warn("Attempt to restart server with invalid key: ${call.parameters["key"]}")
+            }
         }
     }
 }
