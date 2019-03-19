@@ -1,23 +1,22 @@
 package com.cout970
 
-import io.ktor.application.Application
-import io.ktor.application.call
-import io.ktor.application.install
-import io.ktor.application.log
+import io.ktor.application.*
 import io.ktor.features.*
 import io.ktor.gson.gson
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.content.LocalFileContent
 import io.ktor.http.content.resources
 import io.ktor.http.content.static
 import io.ktor.response.respond
+import io.ktor.response.respondFile
 import io.ktor.response.respondText
 import io.ktor.routing.get
 import io.ktor.routing.routing
 import io.ktor.server.engine.ShutDownUrl
 import io.ktor.sessions.*
 import org.slf4j.event.Level
-import kotlin.collections.set
+import java.io.File
 
 fun main(args: Array<String>): Unit = io.ktor.server.netty.EngineMain.main(args)
 
@@ -26,9 +25,7 @@ fun main(args: Array<String>): Unit = io.ktor.server.netty.EngineMain.main(args)
 fun Application.module(testing: Boolean = false) {
 
     install(Sessions) {
-        cookie<MySession>("SESSION_ID") {
-            cookie.extensions["SameSite"] = "lax"
-        }
+        cookie<SessionKey>("SESSION_KEY")
     }
 
     install(Compression) {
@@ -60,21 +57,47 @@ fun Application.module(testing: Boolean = false) {
     }
 
     routing {
-        get("/") {
-            call.respondText(
-                "<h1>HELLO WORLD!</h1><a href=\"/static/js_editor.html\">Go here!</a>",
-                contentType = ContentType.Text.Html
-            )
-        }
-
         static("/static") {
             resources("static")
         }
 
-        get("/session/increment") {
-            val session = call.sessions.get<MySession>() ?: MySession()
-            call.sessions.set(session.copy(count = session.count + 1))
-            call.respondText("Counter is ${session.count}. Refresh to increment.")
+        get("/") {
+            call.respond(LocalFileContent(
+                File("resources/templates/index.html"),
+                contentType = ContentType.Text.Html
+            ))
+        }
+
+        get("/session") {
+            call.sessions.set(SessionKey(call.parameters["key"] ?: ""))
+            if (assertAccess(call)) {
+                call.respondText("""
+                    Login successfully
+                    <a href="/admin_page">Admin page</a>
+                    """.trimIndent(), contentType = ContentType.Text.Html)
+            }
+        }
+
+        get("/admin_page"){
+            if (assertAccess(call)) {
+                call.respondFile(File("resources/templates/admin.html"))
+            }
+        }
+
+        get("/json/gson") {
+            call.respond(mapOf("hello" to "world 2"))
+        }
+
+        get("/run/update") {
+            if (!assertAccess(call)) return@get
+            this@module.log.info("Starting update checks")
+            call.respondText(updateServer(), contentType = ContentType.Text.Plain)
+            this@module.log.info("Update done")
+        }
+
+        get("/run/restart") {
+            if (!assertAccess(call)) return@get
+            ShutDownUrl("") { 1 }.doShutdown(call)
         }
 
         install(StatusPages) {
@@ -85,28 +108,26 @@ fun Application.module(testing: Boolean = false) {
                 call.respond(HttpStatusCode.Forbidden)
             }
         }
-
-        get("/json/gson") {
-            call.respond(mapOf("hello" to "world 2"))
-        }
-
-        get("/run/update") {
-            this@module.log.info("Starting update checks")
-            call.respondText(updateServer(), contentType = ContentType.Text.Plain)
-            this@module.log.info("Update done")
-        }
-
-        get("/run/restart") {
-            if (call.parameters["key"] == System.getenv("ktor_private_key")) {
-                ShutDownUrl("") { 1 }.doShutdown(call)
-            } else {
-                log.warn("Attempt to restart server with invalid key: ${call.parameters["key"]}")
-            }
-        }
     }
 }
 
-data class MySession(val count: Int = 0)
+private suspend inline fun Application.assertAccess(call: ApplicationCall): Boolean {
+    val session = call.sessions.get<SessionKey>() ?: SessionKey("")
+
+    if (!checkKey(session.key)) {
+        val key = if (session.key.isEmpty()) "<empty>" else session.key
+
+        call.respondText("No authorized", contentType = ContentType.Text.Plain)
+        log.warn("Attempt to access with invalid key: $key")
+
+        return false
+    }
+    return true
+}
+
+private fun checkKey(value: String) = value == System.getenv("ktor_private_key")
+
+data class SessionKey(val key: String)
 
 class AuthenticationException : RuntimeException()
 class AuthorizationException : RuntimeException()
