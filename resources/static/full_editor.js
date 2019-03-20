@@ -1,61 +1,36 @@
 window.onload = () => {
-    const codeArea = document.getElementById("code");
+    const htmlCodeArea = document.getElementById("html-code");
+    const cssCodeArea = document.getElementById("css-code");
     const resultArea = document.getElementById("result");
     const logArea = document.getElementById("log");
     const waitTime = 100;
     let lastChange = 0;
 
-    const loadCode = () => {
-        let code = window.localStorage.getItem("code")
+    const loadCode = (key) => {
+        let code = window.localStorage.getItem(key)
         if (code == undefined) code = ""
         return code
     }
 
     const saveCode = () => {
-        window.localStorage.setItem("code", codeArea.value)
+        window.localStorage.setItem("html-code", htmlCodeArea.value)
+        window.localStorage.setItem("css-code", cssCodeArea.value)
     }
 
     const runCode = () => {
-        let result;
-        let classes;
-
-        const log = console.log;
-        console.log = customPrint;
-        logArea.value = '';
-
-        try {
-            result = eval(codeArea.value)
-
-            if (result === undefined) {
-                result = "undefined";
-            } else if (result === null) {
-                result = "null";
-            } else {
-                result = result.toString()
-            }
-            classes = "success";
-        } catch (e) {
-            result = e.toString()
-            classes = "error";
+        let content = (resultArea.contentWindow || resultArea.contentDocument)
+        if (content.document) {
+            content = content.document
         }
-
-        console.log = log;
-        resultArea.className = classes;
-        resultArea.textContent = result;
-        auto_grow(resultArea)
-        auto_grow(logArea)
+        content.head.innerHTML = '<style>' + cssCodeArea.value + '</style>';
+        content.body.innerHTML = htmlCodeArea.value;
     }
 
     const customPrint = (msg) => {
         logArea.value += `${msg}\n`
     }
 
-    codeArea.onkeyup = () => {
-        auto_grow(codeArea)
-    }
-
-    codeArea.onkeydown = (event) => {
-        auto_grow(codeArea)
+    htmlCodeArea.onkeydown = (event) => {
         saveCode()
         lastChange = Date.now()
         setTimeout(() => {
@@ -65,20 +40,24 @@ window.onload = () => {
             }
         }, waitTime)
 
-        return insertTab(codeArea, event)
+        return insertTab(htmlCodeArea, event)
+    }
+    cssCodeArea.onkeydown = (event) => {
+        saveCode()
+        lastChange = Date.now()
+        setTimeout(() => {
+            let now = Date.now()
+            if ((now - lastChange) >= waitTime) {
+                runCode();
+            }
+        }, waitTime)
+
+        return insertTab(cssCodeArea, event)
     }
 
-    codeArea.value = loadCode()
-    auto_grow(codeArea)
-    auto_grow(resultArea)
-    auto_grow(logArea)
+    htmlCodeArea.value = loadCode('html-code')
+    cssCodeArea.value = loadCode('css-code')
     runCode()
-}
-
-// https://stackoverflow.com/questions/17772260/textarea-auto-height
-function auto_grow(element) {
-    element.style.height = "5px";
-    element.style.height = (element.scrollHeight - 20) + "px";
 }
 
 // https://sumtips.com/snippets/javascript/tab-in-textarea/
