@@ -68,6 +68,10 @@ fun Application.module(testing: Boolean = false) {
             call.respond(mapOf("hello" to "world 2"))
         }
 
+        get("/log") {
+            call.respondFile(File("/var/log/web.log"))
+        }
+
         get("/run/update") {
             assertAccess(call)
             this@module.log.info("Starting update checks")
