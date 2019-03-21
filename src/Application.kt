@@ -17,7 +17,6 @@ import io.ktor.sessions.cookie
 import io.ktor.sessions.sessions
 import io.ktor.sessions.set
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.withTimeout
 import org.slf4j.event.Level
 import java.io.File
 import java.io.IOException
@@ -75,20 +74,16 @@ fun Application.module(testing: Boolean = false) {
             assertAccess(call)
             this@module.log.info("Stopping server...")
 
-            withTimeout(1000) {
-                environment.monitor.raise(ApplicationStopPreparing, environment)
+            environment.monitor.raise(ApplicationStopPreparing, environment)
 
-                if (environment is ApplicationEngineEnvironment) {
-                    (environment as ApplicationEngineEnvironment).stop()
-                } else {
-                    application.dispose()
-                }
-
-                delay(1000)
-                exitProcess(0)
-                Unit
+            if (environment is ApplicationEngineEnvironment) {
+                (environment as ApplicationEngineEnvironment).stop()
+            } else {
+                application.dispose()
             }
-            call.respondText("Restating...", status = HttpStatusCode.Gone)
+
+            delay(1000)
+            exitProcess(0)
         }
     }
 
