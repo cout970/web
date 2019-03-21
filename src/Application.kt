@@ -1,28 +1,26 @@
 package com.cout970
 
-import io.ktor.application.Application
-import io.ktor.application.call
-import io.ktor.application.install
-import io.ktor.application.log
+import io.ktor.application.*
 import io.ktor.features.*
 import io.ktor.gson.gson
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
-import io.ktor.http.content.LocalFileContent
-import io.ktor.http.content.resources
+import io.ktor.http.content.files
 import io.ktor.http.content.static
-import io.ktor.response.respond
 import io.ktor.response.respondFile
 import io.ktor.response.respondText
 import io.ktor.routing.get
 import io.ktor.routing.routing
-import io.ktor.server.engine.ShutDownUrl
+import io.ktor.server.engine.ApplicationEngineEnvironment
 import io.ktor.sessions.Sessions
 import io.ktor.sessions.cookie
 import io.ktor.sessions.sessions
 import io.ktor.sessions.set
+import kotlinx.coroutines.delay
 import org.slf4j.event.Level
 import java.io.File
+import java.io.IOException
+import kotlin.system.exitProcess
 
 data class SessionKey(val key: String)
 
@@ -35,16 +33,17 @@ fun Application.module(testing: Boolean = false) {
 
     routing {
         static("/static") {
-            resources("static")
+            files("resources/static")
         }
 
         get("/") {
-            call.respond(
-                LocalFileContent(
-                    File("resources/templates/index.html"),
-                    contentType = ContentType.Text.Html
-                )
-            )
+            call.respondText(includeWrapperTemplate("page.html", "index.html"), contentType = ContentType.Text.Html)
+        }
+        get("/full-editor") {
+            call.respondText(includeWrapperTemplate("page.html", "full_editor.html"), contentType = ContentType.Text.Html)
+        }
+        get("/js-editor") {
+            call.respondText(includeWrapperTemplate("page.html", "js_editor.html"), contentType = ContentType.Text.Html)
         }
 
         get("/session") {
@@ -61,27 +60,29 @@ fun Application.module(testing: Boolean = false) {
 
         get("/admin_page") {
             assertAccess(call)
-            call.respondFile(File("resources/templates/admin.html"))
-        }
-
-        get("/json/gson") {
-            call.respond(mapOf("hello" to "world 2"))
+            call.respondText(includeWrapperTemplate("page.html", "admin.html"), contentType = ContentType.Text.Html)
         }
 
         get("/log") {
             call.respondFile(File("/var/log/web.log"))
         }
 
-        get("/run/update") {
-            assertAccess(call)
-            this@module.log.info("Starting update checks")
-            call.respondText(updateServer(), contentType = ContentType.Text.Plain)
-            this@module.log.info("Update done")
-        }
-
         get("/run/restart") {
             assertAccess(call)
-            ShutDownUrl("") { 1 }.doShutdown(call)
+            this@module.log.info("Stopping server...")
+            call.respondText("Restating...", status = HttpStatusCode.Gone)
+
+            delay(1000)
+            environment.monitor.raise(ApplicationStopPreparing, environment)
+
+            if (environment is ApplicationEngineEnvironment) {
+                (environment as ApplicationEngineEnvironment).stop()
+            } else {
+                application.dispose()
+            }
+
+            delay(1000)
+            exitProcess(0)
         }
     }
 
@@ -113,7 +114,7 @@ fun Application.install() {
     install(DataConversion)
 
     install(DefaultHeaders) {
-        header("X-Engine", "Ktor") // will send this header with each response
+        header("X-Engine", "Ktor")
     }
 
     install(ContentNegotiation) {
@@ -123,9 +124,26 @@ fun Application.install() {
     install(StatusPages) {
         exception<AuthenticationException> {
             call.respondText(
-                "No authorized",
-                contentType = ContentType.Text.Plain,
+                includeWrapperTemplate("page.html", "error.html", mapOf("msg" to "No authorized")),
+                contentType = ContentType.Text.Html,
                 status = HttpStatusCode.Unauthorized
+            )
+        }
+        exception<IOException> {
+            call.respondText(
+                includeWrapperTemplate("page.html", "error.html", mapOf("msg" to "Internal error")),
+                contentType = ContentType.Text.Html,
+                status = HttpStatusCode.InternalServerError
+            )
+        }
+
+        status(HttpStatusCode.NotFound) {
+            // Throttle down the petitions to missing pages
+            delay(1000)
+            call.respondText(
+                includeWrapperTemplate("page.html", "error.html", mapOf("msg" to "Not found")),
+                contentType = ContentType.Text.Html,
+                status = HttpStatusCode.NotFound
             )
         }
     }

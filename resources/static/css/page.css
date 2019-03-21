@@ -1,0 +1,13 @@
+
+body {
+    padding: 0;
+    margin: 0;
+    background-color: #1b1b1b;
+    color: #f2ffff;
+}
+
+.content-wrapper {
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+}

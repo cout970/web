@@ -1,9 +1,3 @@
-body {
-    background-color: #1b1b1b;
-    color: #f2ffff;
-    overflow-x: hidden;
-}
-
 textarea {
     border: 2px grey solid;
     padding: 10px;
@@ -11,7 +5,7 @@ textarea {
     color: #f2ffff;
     width: 100%;
     resize: none;
-    overflow: hidden;
+    /*overflow: hidden;*/
 }
 
 .success {

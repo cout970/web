@@ -1,9 +1,3 @@
-body {
-    background-color: #1b1b1b;
-    color: #f2ffff;
-    overflow-x: hidden;
-}
-
 .full {
     display: flex;
 }
