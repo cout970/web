@@ -16,6 +16,6 @@ while echo "Starting..."; do
     ${runCommand}
     echo "Server crashed with exit code $?." >&2
     scripts/update.sh | tee /var/log/web.update.log
-    echo " Respawning in 1 second..."
-    sleep 1
+    echo " Respawning in 2 seconds..."
+    sleep 2
 done
