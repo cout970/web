@@ -15,7 +15,7 @@ runCommand='java -jar build/libs/web.jar -port=80'
 while echo "Starting..."; do
     ${runCommand}
     echo "Server crashed with exit code $?." >&2
-    ./update.sh | tee /var/log/web.update.log
+    scripts/update.sh | tee /var/log/web.update.log
     echo " Respawning in 1 second..."
     sleep 1
 done
