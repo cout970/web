@@ -17,6 +17,7 @@ import io.ktor.sessions.cookie
 import io.ktor.sessions.sessions
 import io.ktor.sessions.set
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withTimeout
 import org.slf4j.event.Level
 import java.io.File
 import java.io.IOException
@@ -40,7 +41,10 @@ fun Application.module(testing: Boolean = false) {
             call.respondText(includeWrapperTemplate("page.html", "index.html"), contentType = ContentType.Text.Html)
         }
         get("/full-editor") {
-            call.respondText(includeWrapperTemplate("page.html", "full_editor.html"), contentType = ContentType.Text.Html)
+            call.respondText(
+                includeWrapperTemplate("page.html", "full_editor.html"),
+                contentType = ContentType.Text.Html
+            )
         }
         get("/js-editor") {
             call.respondText(includeWrapperTemplate("page.html", "js_editor.html"), contentType = ContentType.Text.Html)
@@ -70,19 +74,21 @@ fun Application.module(testing: Boolean = false) {
         get("/run/restart") {
             assertAccess(call)
             this@module.log.info("Stopping server...")
-            call.respondText("Restating...", status = HttpStatusCode.Gone)
 
-            delay(1000)
-            environment.monitor.raise(ApplicationStopPreparing, environment)
+            withTimeout(1000) {
+                environment.monitor.raise(ApplicationStopPreparing, environment)
 
-            if (environment is ApplicationEngineEnvironment) {
-                (environment as ApplicationEngineEnvironment).stop()
-            } else {
-                application.dispose()
+                if (environment is ApplicationEngineEnvironment) {
+                    (environment as ApplicationEngineEnvironment).stop()
+                } else {
+                    application.dispose()
+                }
+
+                delay(1000)
+                exitProcess(0)
+                Unit
             }
-
-            delay(1000)
-            exitProcess(0)
+            call.respondText("Restating...", status = HttpStatusCode.Gone)
         }
     }
 
