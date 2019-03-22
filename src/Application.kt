@@ -17,6 +17,7 @@ import io.ktor.sessions.Sessions
 import io.ktor.sessions.cookie
 import io.ktor.sessions.sessions
 import io.ktor.sessions.set
+import io.ktor.util.error
 import kotlinx.coroutines.delay
 import org.slf4j.event.Level
 import java.io.File
@@ -78,7 +79,7 @@ fun Application.module(testing: Boolean = false) {
         get("/log/clear") {
             val src = File("/var/log/web.log")
             val dst = File("/var/log/web.old.log")
-            src.copyTo(dst)
+            dst.appendBytes(src.readBytes())
             src.writeText("")
             call.respondText("Log cleared")
         }
@@ -143,7 +144,8 @@ fun Application.install() {
                 status = HttpStatusCode.Unauthorized
             )
         }
-        exception<IOException> {
+        exception<IOException> { cause ->
+            log.error(cause)
             call.respondText(
                 includeWrapperTemplate("page.html", "error.html", mapOf("msg" to "Internal error")),
                 contentType = ContentType.Text.Html,
