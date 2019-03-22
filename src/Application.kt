@@ -8,6 +8,7 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.files
 import io.ktor.http.content.static
 import io.ktor.response.respondFile
+import io.ktor.response.respondRedirect
 import io.ktor.response.respondText
 import io.ktor.routing.get
 import io.ktor.routing.routing
@@ -66,8 +67,20 @@ fun Application.module(testing: Boolean = false) {
             call.respondText(includeWrapperTemplate("page.html", "admin.html"), contentType = ContentType.Text.Html)
         }
 
+        get("/voidpixel") {
+            call.respondRedirect("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
+        }
+
         get("/log") {
             call.respondFile(File("/var/log/web.log"))
+        }
+
+        get("/log/clear") {
+            val src = File("/var/log/web.log")
+            val dst = File("/var/log/web.old.log")
+            src.copyTo(dst)
+            src.writeText("")
+            call.respondText("Log cleared")
         }
 
         get("/run/restart") {
