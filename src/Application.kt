@@ -8,7 +8,6 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.files
 import io.ktor.http.content.static
 import io.ktor.response.respondFile
-import io.ktor.response.respondRedirect
 import io.ktor.response.respondText
 import io.ktor.routing.get
 import io.ktor.routing.routing
@@ -69,7 +68,10 @@ fun Application.module(testing: Boolean = false) {
         }
 
         get("/voidpixel") {
-            call.respondRedirect("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
+            call.respondText(
+                "<html><meta http-equiv=\"refresh\" content=\"0; url=https://www.youtube.com/watch?v=dQw4w9WgXcQ\"></html>",
+                contentType = ContentType.Text.Html
+            )
         }
 
         get("/log") {
