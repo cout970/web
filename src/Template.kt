@@ -9,6 +9,9 @@ fun includeWrapperTemplate(wrapper: String, name: String, env: Map<String, Strin
     return includeTemplate(wrapper, mapOf("$0" to includeTemplate(name, env)))
 }
 
+fun env(vararg args: String): Map<String, String> = args.mapIndexed { index, value -> "\$$index" to value }.toMap()
+fun env(args: List<String>): Map<String, String> = args.mapIndexed { index, value -> "\$$index" to value }.toMap()
+
 fun includeTemplate(name: String, env: Map<String, String> = emptyMap()): String {
     val file = File("resources/templates/$name")
     if (file.exists()) {
@@ -86,19 +89,7 @@ private fun processCode(code: String, env: Map<String, String>): String {
                 .map { parseArgument(it, env) }
         }
 
-        if (func == "include") {
-            val arguments = args.drop(1).mapIndexed { index, value -> "\$$index" to value }.toMap()
-            return includeTemplate(args[0], arguments)
-        }
-
-        if (!env.containsKey(func)) {
-            log.warn("Attempt to call undefined function: '$func'")
-            return ""
-        }
-
-        val arguments = args.mapIndexed { index, value -> "\$$index" to value }.toMap()
-
-        return includeTemplate(env.getValue(func), arguments)
+        return callTemplateFunction(func, args, env)
     }
 
     variable.matchEntire(code)?.let { result ->
@@ -109,11 +100,24 @@ private fun processCode(code: String, env: Map<String, String>): String {
     return "Unable to process code: '$code'"
 }
 
+fun callTemplateFunction(func: String, args: List<String>, env: Map<String, String>): String {
+
+    if (func == "include") {
+        return includeTemplate(args[0], env(args.drop(1)))
+    }
+
+    log.warn("Attempt to call undefined function: '$func'")
+    return ""
+}
+
 private fun parseArgument(code: String, env: Map<String, String>): String {
     val variable = """((\$|\w)[\w|\d]*)""".toRegex()
 
     if (code.startsWith("\"\"\"") && code.endsWith("\"\"\"")) {
         return processTemplateContent(code.substring(3, code.length - 3), env)
+    }
+    if (code.startsWith("\"") && code.endsWith("\"") && !code.contains('\n')) {
+        return processTemplateContent(code.substring(1, code.length - 1), env)
     }
     variable.matchEntire(code)?.let { result ->
         return env[result.value] ?: "null"
