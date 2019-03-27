@@ -204,7 +204,7 @@ fun Application.install() {
 suspend fun ApplicationCall.redirectRandom() {
     // Retrieve a random blocked IP to redirect to.
     val redirectIP = transaction {
-        val row = BloquedIPs.selectAll().limit(1).first()
+        val row = BloquedIPs.selectAll().sortedBy { Math.random() }.first()
 
         // Update the redirect count
         BloquedIPs.update({ BloquedIPs.ip eq row[BloquedIPs.ip] }) {
@@ -213,7 +213,7 @@ suspend fun ApplicationCall.redirectRandom() {
 
         row[BloquedIPs.ip]
     }
-    respondRedirect("http://$redirectIP", true)
+    respondRedirect("http://$redirectIP")
 }
 
 fun main(args: Array<String>): Unit = io.ktor.server.netty.EngineMain.main(args)
