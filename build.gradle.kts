@@ -38,6 +38,7 @@ dependencies {
     compile("io.ktor:ktor-server-sessions:$ktor_version")
     compile("io.ktor:ktor-gson:$ktor_version")
     compile("org.jetbrains.exposed:exposed:$exposed_version")
+    compile("mysql:mysql-connector-java:8.0.15")
 
     testCompile("io.ktor:ktor-server-tests:$ktor_version")
 }

@@ -7,7 +7,9 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.files
 import io.ktor.http.content.static
+import io.ktor.request.uri
 import io.ktor.response.respondFile
+import io.ktor.response.respondRedirect
 import io.ktor.response.respondText
 import io.ktor.routing.get
 import io.ktor.routing.routing
@@ -16,8 +18,10 @@ import io.ktor.sessions.Sessions
 import io.ktor.sessions.cookie
 import io.ktor.sessions.sessions
 import io.ktor.sessions.set
-import io.ktor.util.error
 import kotlinx.coroutines.delay
+import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.transactions.transaction
+import org.joda.time.DateTime
 import org.slf4j.event.Level
 import java.io.File
 import java.io.IOException
@@ -30,6 +34,19 @@ class AuthenticationException : RuntimeException()
 @Suppress("unused") // Referenced in application.conf
 @kotlin.jvm.JvmOverloads
 fun Application.module(testing: Boolean = false) {
+
+    Database.connect(
+        "jdbc:mysql://localhost:3306/web",
+        user = System.getenv("ktor_db_user"),
+        password = System.getenv("ktor_db_pass"),
+        driver = "com.mysql.cj.jdbc.Driver"
+    )
+
+    transaction {
+        addLogger(StdOutSqlLogger)
+        SchemaUtils.create(BloquedIPs)
+    }
+
     install()
 
     routing {
@@ -147,7 +164,7 @@ fun Application.install() {
             )
         }
         exception<IOException> { cause ->
-            log.error(cause)
+            log.error("IOException: ${cause.message}")
             call.respondText(
                 includeWrapperTemplate("page.html", "error.html", mapOf("msg" to "Internal error")),
                 contentType = ContentType.Text.Html,
@@ -158,13 +175,45 @@ fun Application.install() {
         status(HttpStatusCode.NotFound) {
             // Throttle down the petitions to missing pages
             delay(1000)
-            call.respondText(
-                includeWrapperTemplate("page.html", "error.html", mapOf("msg" to "Not found")),
-                contentType = ContentType.Text.Html,
-                status = HttpStatusCode.NotFound
-            )
+            if (call.request.uri.endsWith(".php")) {
+                val blockedIP = call.request.local.remoteHost
+
+                log.info("Banning IP: $blockedIP")
+                if (BloquedIPs.isIpBloqued(blockedIP)) {
+                    transaction {
+                        BloquedIPs.insert { query ->
+                            query[ip] = blockedIP
+                            query[created] = DateTime.now()
+                            query[redirects] = 0
+                        }
+                    }
+                }
+
+                call.redirectRandom()
+            } else {
+                call.respondText(
+                    includeWrapperTemplate("page.html", "error.html", mapOf("msg" to "Not found")),
+                    contentType = ContentType.Text.Html,
+                    status = HttpStatusCode.NotFound
+                )
+            }
         }
     }
+}
+
+suspend fun ApplicationCall.redirectRandom() {
+    // Retrieve a random blocked IP to redirect to.
+    val redirectIP = transaction {
+        val row = BloquedIPs.selectAll().limit(1).first()
+
+        // Update the redirect count
+        BloquedIPs.update({ BloquedIPs.ip eq row[BloquedIPs.ip] }) {
+            it[BloquedIPs.redirects] = row[BloquedIPs.redirects] + 1
+        }
+
+        row[BloquedIPs.ip]
+    }
+    respondRedirect("http://$redirectIP", true)
 }
 
 fun main(args: Array<String>): Unit = io.ktor.server.netty.EngineMain.main(args)
