@@ -66,6 +66,9 @@ fun Application.module(testing: Boolean = false) {
         get("/js-editor") {
             call.respondText(includeWrapperTemplate("page.html", "js_editor.html"), contentType = ContentType.Text.Html)
         }
+        get("/notebook") {
+            call.respondText(includeWrapperTemplate("page.html", "notebook.html"), contentType = ContentType.Text.Html)
+        }
 
         get("/session") {
             call.sessions.set(SessionKey(call.parameters["key"] ?: ""))
@@ -204,7 +207,11 @@ fun Application.install() {
 suspend fun ApplicationCall.redirectRandom() {
     // Retrieve a random blocked IP to redirect to.
     val redirectIP = transaction {
-        val row = BloquedIPs.selectAll().sortedBy { Math.random() }.first()
+        val row = BloquedIPs.selectAll()
+            .map { it to Math.random() }
+            .sortedBy { it.second }
+            .first()
+            .first
 
         // Update the redirect count
         BloquedIPs.update({ BloquedIPs.ip eq row[BloquedIPs.ip] }) {
@@ -213,7 +220,7 @@ suspend fun ApplicationCall.redirectRandom() {
 
         row[BloquedIPs.ip]
     }
-    respondRedirect("http://$redirectIP")
+    respondRedirect("http://$redirectIP", true)
 }
 
 fun main(args: Array<String>): Unit = io.ktor.server.netty.EngineMain.main(args)

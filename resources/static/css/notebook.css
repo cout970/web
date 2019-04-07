@@ -1,0 +1,92 @@
+.code-block {
+    border: 1px solid #323232;
+    border-left: solid 3px deepskyblue;
+    padding: 5px;
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    margin-bottom: 10px;
+}
+
+.main-wrapper {
+    max-width: 100vw;
+}
+
+.add-block {
+    background-color: #0052f3;
+}
+
+.add-block:hover {
+    background-color: #0064ff;
+}
+
+.clear-block {
+    background-color: #f20000;
+}
+
+.clear-block:hover {
+    background-color: #ff0000;
+}
+
+.button {
+    margin: 10px 10px 20px 0;
+    border: none;
+    padding: 10px;
+    color: white;
+    border-radius: 100px;
+    text-transform: uppercase;
+    font-size: 11px;
+    font-weight: bold;
+    box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.5);
+    cursor: pointer;
+    outline: none;
+}
+
+.button-bottom {
+    float: right;
+}
+
+.button:hover {
+    box-shadow: 0px 15px 20px rgba(0, 0, 0, 0.5);
+    transform: translateY(-2x);
+}
+
+.code-row {
+    display: flex;
+    flex-wrap: nowrap;
+}
+
+.result-row {
+    margin-left: 80px;
+}
+
+.eval-index-wrapper {
+    width: 80px;
+    height: auto;
+    min-height: 40px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.eval-index {
+    margin: 10px;
+    color: #ccddf3;
+    font-weight: bold;
+    font-family: monospace;
+    white-space: nowrap
+}
+
+.code-textarea {
+    border-radius: 3px;
+    flex: 1;
+    overflow-x: inherit;
+    overflow-y: hidden;
+    padding: 4px;
+    background-color: #2d2d2d;
+    color: #ededed;
+    height: 1.2em;
+    min-height: 2.4em;
+    white-space: nowrap
+}

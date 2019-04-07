@@ -11,3 +11,17 @@ body {
     margin-left: auto;
     margin-right: auto;
 }
+
+.all-but-footer {
+    min-height: calc(100vh - 200px);
+    overflow-x: hidden;
+}
+
+footer {
+    margin-top: 50px;
+    clear: both;
+    height: 200px;
+    display: flex;
+    flex: 1;
+    background-color: #050505;
+}
