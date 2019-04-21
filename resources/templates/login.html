@@ -1,0 +1,18 @@
+<!-- args: msg -->
+<link rel="stylesheet" href="/static/css/login.css">
+<div class="box-wrapper">
+    <div class="title">
+        <h1>User login</h1>
+        ${msg}
+    </div>
+    <div class="box">
+        <form action="/login" method="post">
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username" spellcheck="false">
+            <label for="username">Password</label>
+            <input type="password" id="password" name="password" spellcheck="false">
+            <input type="text" name="extra" style="display: none">
+            <input type="submit" value="LOGIN">
+        </form>
+    </div>
+</div>

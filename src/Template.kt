@@ -106,6 +106,12 @@ fun callTemplateFunction(func: String, args: List<String>, env: Map<String, Stri
         return includeTemplate(args[0], env(args.drop(1)))
     }
 
+    if (func == "emptyIfNull") {
+        if (args.size != 1) return ""
+        if (args[0] == "null") return ""
+        return args[0]
+    }
+
     log.warn("Attempt to call undefined function: '$func'")
     return ""
 }

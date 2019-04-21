@@ -7,11 +7,13 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.files
 import io.ktor.http.content.static
+import io.ktor.request.receiveParameters
 import io.ktor.request.uri
 import io.ktor.response.respondFile
 import io.ktor.response.respondRedirect
 import io.ktor.response.respondText
 import io.ktor.routing.get
+import io.ktor.routing.post
 import io.ktor.routing.routing
 import io.ktor.server.engine.ApplicationEngineEnvironment
 import io.ktor.sessions.Sessions
@@ -43,8 +45,8 @@ fun Application.module(testing: Boolean = false) {
     )
 
     transaction {
-        addLogger(StdOutSqlLogger)
         SchemaUtils.create(BloquedIPs)
+        SchemaUtils.create(LoginAttempts)
     }
 
     install()
@@ -82,9 +84,46 @@ fun Application.module(testing: Boolean = false) {
             )
         }
 
+        get("/login") {
+            call.respondText(
+                includeWrapperTemplate("page.html", "login.html", env("")),
+                contentType = ContentType.Text.Html
+            )
+        }
+        post("/login") {
+            val params = call.receiveParameters()
+
+            LoginAttempts.registerAttempt(
+                call.request.local.remoteHost,
+                params["username"] ?: "",
+                params["username"] ?: "",
+                params["extra"] ?: ""
+            )
+
+            val msg = """<h3 class="error">Invalid credentials</h3>"""
+            call.respondText(
+                includeWrapperTemplate("page.html", "login.html", env(msg)),
+                contentType = ContentType.Text.Html
+            )
+        }
         get("/admin_page") {
             assertAccess(call)
             call.respondText(includeWrapperTemplate("page.html", "admin.html"), contentType = ContentType.Text.Html)
+        }
+
+        get("/blocked-ips") {
+            assertAccess(call)
+            call.respondText(
+                includeWrapperTemplate("page.html", "table.html", blockedIpsPage()),
+                contentType = ContentType.Text.Html
+            )
+        }
+        get("/login-attempts") {
+            assertAccess(call)
+            call.respondText(
+                includeWrapperTemplate("page.html", "table.html", loginAttemptsPage()),
+                contentType = ContentType.Text.Html
+            )
         }
 
         get("/voidpixel") {
