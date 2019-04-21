@@ -59,15 +59,7 @@ fun Application.module(testing: Boolean = false) {
         get("/") {
             call.respondText(includeWrapperTemplate("page.html", "index.html"), contentType = ContentType.Text.Html)
         }
-        get("/full-editor") {
-            call.respondText(
-                includeWrapperTemplate("page.html", "full_editor.html"),
-                contentType = ContentType.Text.Html
-            )
-        }
-        get("/js-editor") {
-            call.respondText(includeWrapperTemplate("page.html", "js_editor.html"), contentType = ContentType.Text.Html)
-        }
+
         get("/notebook") {
             call.respondText(includeWrapperTemplate("page.html", "notebook.html"), contentType = ContentType.Text.Html)
         }
