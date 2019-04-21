@@ -29,6 +29,7 @@ footer {
 
 a {
     color: #455b74;
+    font-family: "DejaVu Sans", serif;
 }
 
 a:active {
@@ -37,4 +38,25 @@ a:active {
 
 a:link {
     color: #0064ff;
+}
+
+h1, h2, h3 {
+    font-family: "DejaVu Sans", serif;
+}
+
+h1 {
+    font-size: 40px;
+}
+
+h2 {
+    font-size: 30px;
+}
+
+h3 {
+    margin-top: 30px;
+    font-size: 20px;
+}
+
+* {
+    font-family: "DejaVu Sans", serif;
 }
