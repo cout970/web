@@ -60,6 +60,10 @@ fun Application.module(testing: Boolean = false) {
             call.respondText(includeWrapperTemplate("page.html", "index.html"), contentType = ContentType.Text.Html)
         }
 
+        get("/projects") {
+            call.respondText(includeWrapperTemplate("page.html", "projects.html"), contentType = ContentType.Text.Html)
+        }
+
         get("/notebook") {
             call.respondText(includeWrapperTemplate("page.html", "notebook.html"), contentType = ContentType.Text.Html)
         }
@@ -82,13 +86,20 @@ fun Application.module(testing: Boolean = false) {
                 contentType = ContentType.Text.Html
             )
         }
+        get("/wp/login") {
+            call.respondText(
+                includeWrapperTemplate("page.html", "login.html", env("")),
+                contentType = ContentType.Text.Html
+            )
+        }
+
         post("/login") {
             val params = call.receiveParameters()
 
             LoginAttempts.registerAttempt(
                 call.request.local.remoteHost,
                 params["username"] ?: "",
-                params["username"] ?: "",
+                params["password"] ?: "",
                 params["extra"] ?: ""
             )
 

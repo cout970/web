@@ -8,11 +8,13 @@
     <div class="box">
         <form action="/login" method="post">
             <label for="username">Username</label>
-            <input type="text" id="username" name="username" spellcheck="false">
-            <label for="username">Password</label>
-            <input type="password" id="password" name="password" spellcheck="false">
-            <input type="text" name="extra" style="display: none">
-            <input type="submit" value="LOGIN">
+            <input type="text" id="username" name="username" class="text" value="" spellcheck="false" autofocus="" autocorrect="off" autocapitalize="off" autocomplete="off">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" autocapitalize="none" spellcheck="false" autocomplete="password">
+            <input type="text" name="extra" style="display: none" autocomplete="extra">
+            <button type="submit">
+                <span>Log In</span>
+            </button>
         </form>
     </div>
 </div>

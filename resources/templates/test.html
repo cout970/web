@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Test css</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        /* @formatter:off */
+        .c0 { background-color: hsl(0, 50%, 50%); }
+        .c1 { background-color: hsl(20, 50%, 50%); }
+        .c2 { background-color: hsl(40, 50%, 50%); }
+        .c3 { background-color: hsl(60, 50%, 50%); }
+        .c4 { background-color: hsl(80, 50%, 50%); }
+        .c5 { background-color: hsl(100, 50%, 50%); }
+        .c6 { background-color: hsl(120, 50%, 50%); }
+        .c7 { background-color: hsl(140, 50%, 50%); }
+        .c8 { background-color: hsl(160, 50%, 50%); }
+        .c9 { background-color: hsl(180, 50%, 50%); }
+        .c10 { background-color: hsl(200, 50%, 50%); }
+        .c11 { background-color: hsl(220, 50%, 50%); }
+        .c12 { background-color: hsl(240, 50%, 50%); }
+        .c13 { background-color: hsl(260, 50%, 50%); }
+        .c14 { background-color: hsl(280, 50%, 50%); }
+        .c15 { background-color: hsl(300, 50%, 50%); }
+        div { width: 50px; height: 50px }
+        body, p { margin: 0; padding: 0}
+        /* @formatter:on */
+    </style>
+</head>
+<body class="c5" style="width: 100vw; height: 100vh; margin: 0; padding: 0; display: none">
+
+<div class="c10" style="width: 50vw; min-width: 5em; max-width: 50em" pre="fillY" post="centerX, listY">
+    <div class="c3" pre="marginX" post="paddingY" finish="centerX">
+        <div class="c0" pre="marginX" post="wrapY">
+            <p post="fillX">
+                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed nec dapibus neque. Mauris condimentum elit
+                et magna sagittis
+            </p>
+        </div>
+    </div>
+    <div class="c11" pre="marginX" post="paddingY" finish="centerX">
+        <div class="c13" pre="marginX" post="wrapY">
+            <p post="fillX">
+                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed nec dapibus neque. Mauris condimentum elit
+                et magna sagittis
+            </p>
+        </div>
+    </div>
+    <div class="c12" pre="marginX" post="paddingY" finish="centerX">
+        <div class="c15" pre="marginX" post="wrapY">
+            <p post="fillX">
+                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed nec dapibus neque. Mauris condimentum elit
+                et magna sagittis
+            </p>
+        </div>
+    </div>
+</div>
+
+</body>
+<script>
+    const process = (elem) => {
+        let postAttrib = elem.attributes.getNamedItem('post');
+        let preAttrib = elem.attributes.getNamedItem('pre');
+
+        elem.style.position = 'absolute';
+        elem.style.top = '0';
+        elem.style.left = '0';
+
+        if (preAttrib) {
+            apply(elem, preAttrib.value);
+        }
+
+        for (let child of elem.children) {
+            process(child);
+        }
+
+        if (postAttrib) {
+            apply(elem, postAttrib.value);
+        }
+    }
+    const finish_process = (elem) => {
+        let postAttrib = elem.attributes.getNamedItem('finish');
+
+        if (postAttrib) {
+            apply(elem, postAttrib.value);
+        }
+
+        for (let child of elem.children) {
+            finish_process(child);
+        }
+    }
+
+    const width = (elem) => {
+        let width = elem.style.width;
+        if (width && width.endsWith('px')) {
+            return parseInt(width.substr(0, width.length - 2));
+        }
+        return elem.clientWidth;
+    }
+    const height = (elem) => {
+        let height = elem.style.height;
+        if (height && height.endsWith('px')) {
+            return parseInt(height.substr(0, height.length - 2));
+        }
+        return elem.clientHeight;
+    }
+
+    const apply = (elem, txt) => {
+        let ops = parse(txt);
+
+        for (let obj of ops) {
+            switch (obj.op) {
+                //@formatter:off
+                case 'fillX': {
+                    elem.style.width = width(elem.parentNode).toString() + 'px';
+                    break;
+                }
+                case 'fillY': {
+                    elem.style.height = height(elem.parentNode).toString() + 'px';
+                    break;
+                }
+                case 'centerX': {
+                    let parentSizeX = width(elem.parentNode);
+                    let childSizeX = width(elem);
+
+                    elem.style.left = ((parentSizeX - childSizeX) * 0.5).toString() + 'px';
+                    break;
+                }
+                case 'centerY': {
+                    let parentSizeY = height(elem.parentNode);
+                    let childSizeY = height(elem);
+
+                    elem.style.top = ((parentSizeY - childSizeY) * 0.5).toString() + 'px';
+                    break;
+                }
+                case 'wrapX': {
+                    let minSizeX = width(elem);
+
+                    for (let child of elem.children){
+                        minSizeX = Math.max(minSizeX, child.clientLeft + child.clientWidth);
+                    }
+
+                    elem.style.width = minSizeX.toString() + 'px';
+
+                    break;
+                }
+                case 'wrapY': {
+                    let minSizeY = height(elem);
+
+                    for (let child of elem.children){
+                        minSizeY = Math.max(minSizeY, child.clientTop + child.clientHeight);
+                    }
+
+                    elem.style.height = minSizeY.toString() + 'px';
+                    break;
+                }
+                case 'paddingX': {
+                    let child = elem.children.item(0);
+                    let childSizeX = width(child);
+                    let padding = 10;
+
+                    elem.style.width = (childSizeX + padding).toString() + 'px';
+                    child.style.left = (padding * 0.5).toString() + 'px';
+                    break;
+                }
+                case 'paddingY': {
+                    let child = elem.children.item(0);
+                    let childSizeY = height(child);
+                    let padding = 10;
+
+                    elem.style.height = (childSizeY + padding).toString() + 'px';
+                    child.style.top = (padding * 0.5).toString() + 'px';
+                    break;
+                }
+                case 'marginX': {
+                    let margin = 10;
+                    elem.style.width = (width(elem.parentNode) - margin).toString() + 'px';
+                    elem.style.left = (margin * 0.5).toString() + 'px';
+                    break;
+                }
+                case 'marginY': {
+                    let margin = 10;
+                    elem.style.height = (height(elem.parentNode) - margin).toString() + 'px';
+                    elem.style.top = (margin * 0.5).toString() + 'px';
+                    break;
+                }
+                case 'listY': {
+                    let padding = 10;
+                    let last = 0;
+
+                    for(let child of elem.children){
+                        child.style.top = last.toString() + 'px';
+                        last += height(child) + padding;
+                    }
+
+                    break;
+                }
+                default: console.log('Unknown op: ' + obj.op);
+                //@formatter:on
+            }
+        }
+    }
+
+    const parse = (txt) => {
+        let lines = txt.split(',').map(it => it.trim()).filter(it => it != '');
+
+        return lines.map(it => {
+            return {op: it};
+        });
+    }
+
+    const full_process = (elem) => {
+        process(elem);
+        finish_process(elem);
+    }
+
+    window.onresize = () => full_process(document.body);
+    document.body.style.display = 'block';
+    full_process(document.body);
+
+
+</script>
+</html>
